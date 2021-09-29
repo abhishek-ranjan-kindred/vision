@@ -90,13 +90,16 @@ class CocoDetection(VisionDataset):
             target and transforms it.
         transforms (callable, optional): A function/transform that takes input sample and its target as entry
             and returns a transformed version.
+        is_rgba (bool, optional): If set, will load 4-channel RGBA images and return them as 4 channel image
+            and disable any transforms. 
     """
 
-    def __init__(self, root, annFile, transform=None, target_transform=None, transforms=None):
+    def __init__(self, root, annFile, transform=None, target_transform=None, transforms=None, is_rgba=False):
         super(CocoDetection, self).__init__(root, transforms, transform, target_transform)
         from pycocotools.coco import COCO
         self.coco = COCO(annFile)
         self.ids = list(sorted(self.coco.imgs.keys()))
+        self.is_rgba = is_rgba
 
     def __getitem__(self, index):
         """
@@ -113,9 +116,12 @@ class CocoDetection(VisionDataset):
 
         path = coco.loadImgs(img_id)[0]['file_name']
 
-        img = Image.open(os.path.join(self.root, path)).convert('RGB')
-        if self.transforms is not None:
-            img, target = self.transforms(img, target)
+        if self.is_rgba:
+            img = Image.open(os.path.join(self.root, path))            
+        else:
+            img = Image.open(os.path.join(self.root, path)).convert('RGB')
+            if self.transforms is not None:
+                img, target = self.transforms(img, target)
 
         return img, target
 
